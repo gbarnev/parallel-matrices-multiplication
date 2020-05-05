@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ParallelMatricesMultiplication
 {
@@ -30,15 +33,8 @@ namespace ParallelMatricesMultiplication
                 FillRandomMatrix(rand, matrixA);
                 FillRandomMatrix(rand, matrixB);
             }
-
-            PrintMatrix(matrixA);
-            Console.WriteLine();
-            PrintMatrix(matrixB);
-            Console.WriteLine();
-            PrintMatrix(MultiplyMatrices(matrixA, matrixB));
-            Console.WriteLine();
-
-            Console.ReadLine();
+            var mult = new ParallelMatrixMultiplication(matrixA, matrixB, 8);
+            mult.ComputeAsync().Wait();
         }
 
         public static (double[,] MatrixA, double[,] MatrixB) ParseMatricesFromFile(string pathToFile)
@@ -96,28 +92,6 @@ namespace ParallelMatricesMultiplication
             }
         }
 
-        public static double[,] MultiplyMatrices(double[,] matrixA, double[,] matrixB)
-        {
-            int dimX = matrixA.GetLength(0);
-            int dimY = matrixA.GetLength(1);
-
-            if (dimY != matrixB.GetLength(0))
-                throw new ArgumentException("Unable to multiply matrices with different dimensions!");
-
-            double[,] matrixC = new double[dimX, dimY];
-            for (int i = 0; i < dimX; i++)
-            {
-                for (int j = 0; j < matrixB.GetLength(1); j++)
-                {
-                    double k = 0;
-                    for (int w = 0; w < dimY; w++)
-                    {
-                        k += matrixA[i, w] * matrixB[w, j];
-                    }
-                    matrixC[i, j] = k;
-                }
-            }
-            return matrixC;
-        }
     }
+
 }

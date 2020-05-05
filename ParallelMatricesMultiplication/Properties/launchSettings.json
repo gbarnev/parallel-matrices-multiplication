@@ -2,7 +2,7 @@
   "profiles": {
     "ParallelMatricesMultiplication": {
       "commandName": "Project",
-      "commandLineArgs": "-m 3 -n 3 -k 3 -i D:\\dev\\ParallelMatricesMultiplication\\ParallelMatricesMultiplication\\data.in"
+      "commandLineArgs": "-m 15 -n 5000 -k 5000"
     }
   }
 }
