@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -34,10 +36,14 @@ namespace ParallelMatricesMultiplication
                 FillRandomMatrix(rand, matrixB);
             }
             var mult = new ParallelMatrixMultiplication(matrixA, matrixB, 8);
-            mult.ComputeAsync().Wait();
+            var resultOldImpl = mult.ComputeWithTasksCustom().Result;
+            var resultNewImpl = mult.ComputeParallel();
+            Console.WriteLine("Finished multiplying matrices");
+            Console.WriteLine("Is result equal? " + Enumerable.SequenceEqual(MatrixToArray(resultNewImpl), MatrixToArray(resultOldImpl)));
+            Console.ReadKey();
         }
 
-        public static (double[,] MatrixA, double[,] MatrixB) ParseMatricesFromFile(string pathToFile)
+        static (double[,] MatrixA, double[,] MatrixB) ParseMatricesFromFile(string pathToFile)
         {
             string[] input = File.ReadAllLines(pathToFile);
             var dimensions = input[0].Split(' ');
@@ -69,7 +75,7 @@ namespace ParallelMatricesMultiplication
             return (matrixA, matrixB);
         }
 
-        public static void FillRandomMatrix(Random random, double[,] matrix, int maxElem = 10)
+        static void FillRandomMatrix(Random random, double[,] matrix, int maxElem = 10)
         {
             for (int i = 0; i < matrix.GetLength(0); i++)
             {
@@ -80,7 +86,7 @@ namespace ParallelMatricesMultiplication
             }
         }
 
-        public static void PrintMatrix(double[,] matrix)
+        static void PrintMatrix(double[,] matrix)
         {
             for (int i = 0; i < matrix.GetLength(0); i++)
             {
@@ -90,6 +96,19 @@ namespace ParallelMatricesMultiplication
                 }
                 Console.WriteLine();
             }
+        }
+
+        static double[] MatrixToArray(double[,] matrix)
+        {
+            var res = new double[matrix.GetLength(0) * matrix.GetLength(1)];
+            for (int i = 0; i < matrix.GetLength(0); i++)
+            {
+                for (int j = 0; j < matrix.GetLength(1); j++)
+                {
+                    res[i * matrix.GetLength(1) + j] = matrix[i, j];
+                }
+            }
+            return res;
         }
 
     }

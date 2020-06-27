@@ -22,6 +22,7 @@ namespace ParallelMatricesMultiplication
 
         private readonly int dimX;
         private readonly int dimY;
+        private readonly int innerDim;
         private readonly int tCnt;
         private readonly double[,] matrixA;
         private readonly double[,] matrixB;
@@ -30,9 +31,10 @@ namespace ParallelMatricesMultiplication
         public ParallelMatrixMultiplication(double[,] matrixA, double[,] matrixB, int threadCount)
         {
             dimX = matrixA.GetLength(0);
-            dimY = matrixA.GetLength(1);
+            innerDim = matrixA.GetLength(1);
+            dimY = matrixB.GetLength(1);
 
-            if (dimY != matrixB.GetLength(0))
+            if (matrixA.GetLength(1) != matrixB.GetLength(0))
                 throw new ArgumentException("Unable to multiply matrices with different dimensions!");
 
             this.tCnt = threadCount;
@@ -40,7 +42,7 @@ namespace ParallelMatricesMultiplication
             this.matrixB = matrixB;
         }
 
-        public double[,] Compute()
+        public double[,] ComputeWithThreadsCustom()
         {
             this.resMatrix = new double[dimX, dimY];
             int tRowsLen = dimX / tCnt;
@@ -60,7 +62,7 @@ namespace ParallelMatricesMultiplication
             return resMatrix;
         }
 
-        public async Task<double[,]> ComputeAsync()
+        public async Task<double[,]> ComputeWithTasksCustom()
         {
             this.resMatrix = new double[dimX, dimY];
             int tRowsLen = dimX / tCnt;
@@ -79,6 +81,26 @@ namespace ParallelMatricesMultiplication
             return this.resMatrix;
         }
 
+        public double[,] ComputeParallel()
+        {
+            this.resMatrix = new double[dimX, dimY];
+
+            Parallel.For(0, dimX, new ParallelOptions() { MaxDegreeOfParallelism = tCnt }, (i) =>
+            {
+                for (int j = 0; j < matrixB.GetLength(1); j++)
+                {
+                    double k = 0;
+                    for (int w = 0; w < innerDim; w++)
+                    {
+                        k += matrixA[i, w] * matrixB[w, j];
+                    }
+                    resMatrix[i, j] = k;
+                }
+            });
+
+            return this.resMatrix;
+        }
+
         private void MatrixMultiply(object matrixPart)
         {
             var part = (MatrixPart)matrixPart;
@@ -89,7 +111,7 @@ namespace ParallelMatricesMultiplication
                 for (int j = 0; j < matrixB.GetLength(1); j++)
                 {
                     double k = 0;
-                    for (int w = 0; w < dimY; w++)
+                    for (int w = 0; w < innerDim; w++)
                     {
                         k += matrixA[i, w] * matrixB[w, j];
                     }
